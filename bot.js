@@ -27,11 +27,12 @@ controller.hears('update yourself', ['direct_message'], (bot, message) => {
 		Waterfall([
 			(next) => {
 				bot.reply(message, 'reset repo')
-				Exec('git reset --hard', { cwd: '/root/botkit-minion/' }, next)
+				Exec('git reset --hard && whoami && pwd', { cwd: '/root/botkit-minion/' }, next)
 			},
 			(out, more, next) => {
+				bot.reply(message, "\`\`\`"+out+"\`\`\`")
 				bot.reply(message, 'pulling changes')
-				Exec('git pull origin develop --tags', { cwd: '/root/botkit-minion/' }, next)
+				Exec('git pull origin develop --tags', { cwd: '/root/botkit-minion/', shell: '/bin/bash' }, next)
 			},
 			(out, more, next) => {
 				bot.reply(message, "\`\`\`"+out+"\`\`\`")
