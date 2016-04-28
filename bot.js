@@ -1,5 +1,8 @@
 const Botkit = require('botkit');
 const Purdy = require('purdy')
+const Exec = require('child_process').exec
+const Waterfall = require('async-waterfall')
+const ENV = process.env.BOT_ENV || 'local'
 
 const controller = Botkit.slackbot({
 	debug: false
@@ -14,11 +17,39 @@ controller.spawn({
 
 // give the bot something to listen for.
 controller.hears('hello', ['direct_message', 'direct_mention', 'mention'], (bot,message) => {
-
 	Purdy(message)
 	bot.reply(message,'Hello yourself.');
-
 });
+
+controller.hears('update yourself', ['direct_message'], (bot, message) => {
+	bot.reply(message, 'on it boss!')
+	if (ENV=='prod') {
+		Waterfall([
+			(next) => {
+				bot.reply(message, 'reset repo')
+				Exec('git reset --hard', { cwd: '/root/botkit-minion/' }, next)
+			},
+			(out, more, next) => {
+				bot.reply(message, 'pulling changes')
+				Exec('git pull origin develop --tags', { cwd: '/root/botkit-minion/' }, next)
+			},
+			(out, more, next) => {
+				bot.reply("\`\`\`"+out+"\`\`\`")
+				bot.reply('done!')
+				Exec('supervisorctl restart botkit', { cwd: '/root/botkit-minion/' }, next)
+			},
+		], (err, out) => {
+			if (err) {
+				bot.reply(message, 'bad update!')
+			}
+			else {
+				bot.reply('done!')
+			}
+		})
+	}
+
+})
+
 controller.middleware.receive.use(function(bot, message, next) {
 
    if (message.bot_id) {
