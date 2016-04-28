@@ -34,16 +34,17 @@ controller.hears('update yourself', ['direct_message'], (bot, message) => {
 				Exec('git pull origin develop --tags', { cwd: '/root/botkit-minion/' }, next)
 			},
 			(out, more, next) => {
-				bot.reply("\`\`\`"+out+"\`\`\`")
-				bot.reply('done!')
+				bot.reply(message, "\`\`\`"+out+"\`\`\`")
+				bot.reply(message, 'done!')
 				Exec('supervisorctl restart botkit', { cwd: '/root/botkit-minion/' }, next)
 			},
 		], (err, out) => {
 			if (err) {
 				bot.reply(message, 'bad update!')
+				bot.reply(message, err.message)
 			}
 			else {
-				bot.reply('done!')
+				bot.reply(message, 'done!')
 			}
 		})
 	}
